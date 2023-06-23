@@ -93,7 +93,7 @@ pub fn setup_and_run(
     let bpf_program = Path::new(&bpf_program_path);
     let interface = interface::get_interface(lb.iface.name.as_str())?;
     let xdp_flags = libbpf::XdpFlags::UPDATE_IF_NOEXIST | libbpf::XdpFlags::DRV_MODE;
-    unload_bpf(&interface, xdp_flags);
+    let _ = unload_bpf(&interface, xdp_flags);
     match load_bpf(&interface, bpf_program, xdp_flags, progsec, xsks_map_name) {
         Ok(_) => {}
         Err(e) => {
@@ -253,6 +253,7 @@ impl XDPWorker<'_> {
             //
             // Service completion queue
             //
+            self.rx.wake();
             let r = self.cq.service(&mut bufs, BATCH_SIZE);
             match r {
                 Ok(_) => {}
