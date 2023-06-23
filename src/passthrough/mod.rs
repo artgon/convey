@@ -24,6 +24,7 @@ use std::str::FromStr;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 use std::time::Duration;
+use dns_lookup::lookup_host;
 
 mod arp;
 mod backend;
@@ -66,10 +67,13 @@ impl Server {
                     for (backend_name, backend) in new_config.backends {
                         let mut backend_servers = HashMap::new();
                         for (_, server) in backend.servers {
-                            let listen_addr: SocketAddr = FromStr::from_str(&server.addr)
-                                .ok()
-                                .expect("Failed to parse listen host:port string");
-                            backend_servers.insert(listen_addr, server.weight);
+                            let hostname = &server.addr;
+
+                            let ips: Vec<std::net::IpAddr> = lookup_host(hostname).unwrap();
+                            for ip in ips {
+                                    let listen_addr = SocketAddr::new(ip, server.port);
+                                    backend_servers.insert(listen_addr, server.weight);
+                            }
                         }
                         for lb in lbs.iter_mut() {
                             if lb.backend.name == backend_name {

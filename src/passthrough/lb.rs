@@ -120,10 +120,13 @@ impl LB {
         match conf.base.backends.get(&front.backend) {
             Some(back) => {
                 for (_, addr) in &back.servers {
-                    let listen_addr: SocketAddr = FromStr::from_str(&addr.addr)
-                        .ok()
-                        .expect("Failed to parse listen host:port string");
-                    backend_servers.insert(listen_addr, addr.weight);
+                    let hostname = &addr.addr;
+
+                    let ips: Vec<std::net::IpAddr> = lookup_host(hostname).unwrap();
+                    for ip in ips {
+                        let listen_addr = SocketAddr::new(ip, addr.port);
+                        backend_servers.insert(listen_addr, addr.weight);
+                    }
                 }
                 if back.health_check_interval > 0 {
                     health_check_interval = back.health_check_interval;
