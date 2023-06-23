@@ -48,6 +48,7 @@ pub struct BackendPool {
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct ServerConfig {
     pub addr: String,
+    pub port: u16,
     pub weight: Option<u16>,
 }
 
